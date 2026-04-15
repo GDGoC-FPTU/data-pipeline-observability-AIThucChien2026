@@ -2,8 +2,8 @@
 ==============================================================
 Day 10 Lab: Build Your First Automated ETL Pipeline
 ==============================================================
-Student ID: AI20K-XXXX  (<-- Thay XXXX bang ma so cua ban)
-Name: Your Name Here
+Student ID: 2A202600133
+Name: Nguyen Ba Hao
 
 Nhiem vu:
    1. Extract:   Doc du lieu tu file JSON
@@ -26,13 +26,13 @@ import os
 import datetime
 
 # --- CONFIGURATION ---
-SOURCE_FILE = 'raw_data.json'
-OUTPUT_FILE = 'processed_data.csv'
+SOURCE_FILE = "raw_data.json"
+OUTPUT_FILE = "processed_data.csv"
 
 
 def extract(file_path):
     """
-    Task 1: Doc du lieu JSON tu file.
+    Task 1: Trich xuat du lieu.
 
     Goi y:
        - Dung json.load() de doc file JSON
@@ -43,11 +43,16 @@ def extract(file_path):
     """
     print(f"Extracting data from {file_path}...")
     # TODO: Viet code doc file JSON o day
-    # Vi du:
-    #   with open(file_path, 'r') as f:
-    #       data = json.load(f)
-    #   return data
-    pass
+    try:
+        if not os.path.exists(file_path):
+            print(f"Error: {file_path} not found.")
+            return []
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data
+    except Exception as e:
+        print(f"Error during extraction: {e}")
+        return []
 
 
 def validate(data):
@@ -71,14 +76,31 @@ def validate(data):
 
     # TODO: Lap qua data, kiem tra tung record
     # Giu lai record hop le, dem record loi
+    for item in data:
+        price = item.get("price")
+        category = item.get("category")
 
-    print(f"Validation complete. Valid: {len(valid_records)}, Errors: {error_count}")
+        # Validation rules: price > 0 AND category is not empty
+        if (
+            price is not None
+            and isinstance(price, (int, float))
+            and price > 0
+            and category is not None
+            and str(category).strip() != ""
+        ):
+            valid_records.append(item)
+        else:
+            error_count += 1
+
+    print(
+        f"Validation summary: {len(valid_records)} records kept, {error_count} dropped."
+    )
     return valid_records
 
 
 def transform(data):
     """
-    Task 3: Ap dung business logic.
+    Task 3: chuyen hoa du lieu.
 
     Yeu cau:
        - Tinh discounted_price = price * 0.9 (giam 10%)
@@ -95,18 +117,34 @@ def transform(data):
         pd.DataFrame: DataFrame da duoc transform
     """
     # TODO: Tao DataFrame va ap dung transformations
-    pass
+    if not data:
+        return None
+
+    df = pd.DataFrame(data)
+
+    # Calculate discounted price (10% off)
+    df["discounted_price"] = df["price"] * 0.9
+
+    # Standardize category to Title Case
+    df["category"] = df["category"].str.title()
+
+    # Add processing timestamp
+    df["processed_at"] = datetime.datetime.now().isoformat()
+
+    return df
 
 
 def load(df, output_path):
     """
-    Task 4: Luu DataFrame ra file CSV.
+    Task 4: Tai du lieu ve.
 
     Goi y:
        - df.to_csv(output_path, index=False)
     """
     # TODO: Luu DataFrame ra CSV
-    print(f"Data saved to {output_path}")
+    if df is not None:
+        df.to_csv(output_path, index=False)
+        print(f"Data saved to {output_path}")
 
 
 # ============================================================
